@@ -5,7 +5,7 @@ const { summarizeLogs } = require('./src/summarize');
 const { generatePdf } = require('./src/generatePdf');
 const { sendReportEmail } = require('./src/sendEmail');
 
-const REQUIRED_ENV = ['RAILWAY_API_TOKEN', 'ANTHROPIC_API_KEY', 'RESEND_API_KEY'];
+const REQUIRED_ENV = ['RAILWAY_API_TOKEN', 'ANTHROPIC_API_KEY', 'GMAIL_USER', 'GMAIL_APP_PASSWORD'];
 for (const key of REQUIRED_ENV) {
   if (!process.env[key]) {
     console.error(`Missing required env var: ${key}`);
@@ -34,11 +34,14 @@ async function runDailyReport() {
   } catch (err) {
     console.error('Report failed:', err);
     try {
-      const { Resend } = require('resend');
-      const resend = new Resend(process.env.RESEND_API_KEY);
-      await resend.emails.send({
-        from: 'CaaS Log Reporter <logs@soliduscapital.io>',
-        to: [process.env.REPORT_EMAIL || 'mam@soliduscapital.io'],
+      const nodemailer = require('nodemailer');
+      const transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: { user: process.env.GMAIL_USER, pass: process.env.GMAIL_APP_PASSWORD }
+      });
+      await transporter.sendMail({
+        from: `CaaS Log Reporter <${process.env.GMAIL_USER}>`,
+        to: process.env.REPORT_EMAIL || 'mam@soliduscapital.io',
         subject: 'CaaS Log Reporter - ERROR en el informe diario',
         html: `<p>El informe automatico ha fallado:</p><pre>${err.message}\n${err.stack}</pre>`,
       });
