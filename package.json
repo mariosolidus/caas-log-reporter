@@ -7,15 +7,12 @@
     "start": "node index.js",
     "test:run": "RUN_NOW=true node index.js"
   },
-  "keywords": [],
-  "author": "Solidus Capital",
-  "license": "ISC",
   "dependencies": {
     "@anthropic-ai/sdk": "^0.80.0",
     "date-fns-tz": "^3.2.0",
     "dotenv": "^17.3.1",
     "node-cron": "^4.2.1",
-    "pdfkit": "^0.18.0",
-    "resend": "^6.9.4"
+    "nodemailer": "^6.9.16",
+    "pdfkit": "^0.18.0"
   }
 }
