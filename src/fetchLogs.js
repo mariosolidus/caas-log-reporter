@@ -1,5 +1,5 @@
 const RAILWAY_API_URL = 'https://backboard.railway.app/graphql/v2';
-const PROJECT_ID = process.env.RAILWAY_PROJECT_ID || '369a7aa0-a3a0-4d79-9768-8dc7e5207319';
+const PROJECT_ID = process.env.CAAS_PROJECT_ID || '369a7aa0-a3a0-4d79-9768-8dc7e5207319';
 
 async function railwayQuery(query, variables = {}) {
   const response = await fetch(RAILWAY_API_URL, {
