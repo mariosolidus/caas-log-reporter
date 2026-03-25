@@ -10,7 +10,10 @@ async function railwayQuery(query, variables = {}) {
     },
     body: JSON.stringify({ query, variables }),
   });
-  if (!response.ok) throw new Error(`Railway API HTTP error: ${response.status}`);
+  if (!response.ok) {
+    const text = await response.text().catch(() => '');
+    throw new Error(`Railway API HTTP error: ${response.status} - ${text.slice(0, 200)}`);
+  }
   const data = await response.json();
   if (data.errors) throw new Error(data.errors.map((e) => e.message).join(', '));
   return data.data;
@@ -43,19 +46,15 @@ async function getLatestDeploymentId(serviceId, environmentId) {
   return (active || edges[0])?.node?.id || null;
 }
 
-async function getLogsForDeployment(deploymentId, startDate, endDate) {
+async function getLogsForDeployment(deploymentId) {
   const query = `
-    query GetLogs($deploymentId: String!, $startDate: String, $endDate: String) {
-      deploymentLogs(deploymentId: $deploymentId, startDate: $startDate, endDate: $endDate, limit: 2000) {
+    query GetLogs($deploymentId: String!) {
+      deploymentLogs(deploymentId: $deploymentId, limit: 500) {
         timestamp message severity
       }
     }
   `;
-  const data = await railwayQuery(query, {
-    deploymentId,
-    startDate: startDate.toISOString(),
-    endDate: endDate.toISOString(),
-  });
+  const data = await railwayQuery(query, { deploymentId });
   return data.deploymentLogs || [];
 }
 
@@ -72,11 +71,11 @@ async function fetchAllLogs(startDate, endDate) {
     try {
       const deploymentId = await getLatestDeploymentId(service.id, prodEnv.id);
       if (!deploymentId) { result[service.name] = []; continue; }
-      const logs = await getLogsForDeployment(deploymentId, startDate, endDate);
+      const logs = await getLogsForDeployment(deploymentId);
       result[service.name] = logs;
-      console.log(`    -> ${logs.length} lines`);
+      console.log(`  -> ${logs.length} lines`);
     } catch (err) {
-      console.error(`    -> Error for ${service.name}: ${err.message}`);
+      console.error(`  -> Error for ${service.name}: ${err.message}`);
       result[service.name] = [];
     }
   }
